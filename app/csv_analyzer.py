@@ -6,26 +6,6 @@ Created on Wed Feb 12 15:51:32 2020
 """
 
 import csv
-import datetime
-
-#computer_name = "DESKTOP-SGGRUD3"
-#survey_data = None
-#csv_header = None
-#
-#with open("MyQualtricsDownload/Moustress test.csv") as csv_file:
-#    csv_reader = csv.reader(csv_file, delimiter=",")
-#    for index, row in enumerate(csv_reader):
-#        if index == 0:
-#            csv_header = row
-#        if row[-1] == computer_name:
-#            survey_data = row
-#
-#if csv_header is not None:
-#    print(csv_header)
-#
-#if survey_data is not None:
-#    print(survey_data)
-
 
 def get_surveys(computer_name):
     print(f"[INFO] Searching survey answers for {computer_name}...")
