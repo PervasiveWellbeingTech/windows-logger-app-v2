@@ -10,7 +10,6 @@ Created on Wed Feb 12 15:23:38 2020
 
 import requests
 import zipfile
-import json
 import io, os
 import sys
 import re
@@ -18,11 +17,7 @@ from requests.exceptions import HTTPError
 
 
 def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
-
-    surveyId = surveyId
-    fileFormat = fileFormat
-    dataCenter = dataCenter 
-
+    
     # Setting static parameters
     requestCheckProgress = 0.0
     progressStatus = "inProgress"
@@ -100,18 +95,13 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
 def main():
     
     try:
-      apiToken = "KJxEdAFzoTLWpdLdBzy0hnmD6jeYiFw1Xrph3RhK"  # Temporary
-      dataCenter = "stanforduniversity.ca1"
+      apiToken = os.environ.get("API_TOKEN")
+      dataCenter = os.environ.get("DATA_CENTER")
+      surveyId = os.environ.get("SURVEY_ID")
+      fileFormat = os.environ.get("FILE_FORMAT")
     except KeyError:
-      print("[ERROR] Set environment variables APIKEY and DATACENTER")
+      print("[ERROR] Set environment variables API_TOKEN, DATA_CENTER, SURVEY_ID and FILE_FORMAT")
       sys.exit(2)
-
-    try:
-        surveyId = "SV_23QKD9ueJfXlQrz"
-        fileFormat = "csv"
-    except IndexError:
-        print ("[ERROR] Usage: surveyId fileFormat")
-        sys.exit(2)
 
     if fileFormat not in ["csv", "tsv", "spss"]:
         print ("[ERROR] fileFormat must be either csv, tsv, or spss")
@@ -124,6 +114,3 @@ def main():
        sys.exit(2)
 
     return exportSurvey(apiToken, surveyId,dataCenter, fileFormat)
- 
-if __name__== "__main__":
-    main()
