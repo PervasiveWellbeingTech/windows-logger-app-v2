@@ -8,7 +8,7 @@ Created on Wed Feb 12 15:51:32 2020
 import csv
 
 def get_surveys(computer_name):
-    print(f"[INFO] Searching survey answers for {computer_name}...")
+    print("[INFO] Searching survey answers for {}...".format(computer_name))
     try:
         with open("qualtrics_survey/Moustress test.csv") as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
@@ -19,10 +19,10 @@ def get_surveys(computer_name):
                     answers.append(row)
         
         if answers:
-            print(f"[INFO] {len(answers)} answers found for {computer_name}")
+            print("[INFO] {} answers found for {}".format(len(answers), computer_name))
             return answers
         else:
-            print("[WARNING] Not answers found for {computer_name}")
+            print("[WARNING] Not answers found for {}".format(computer_name))
     except:
         print("[ERROR] Survey file not found")
 

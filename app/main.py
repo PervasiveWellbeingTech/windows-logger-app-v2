@@ -34,7 +34,7 @@ def launch_logger():
 
 def close_logger():
     print("[INFO] Closing mouse logger...")
-    os.system(f"taskkill /f /im {LOGGER_APP_NAME}")
+    os.system("taskkill /f /im {}".format(LOGGER_APP_NAME))
 
     print("[INFO] Mouse logger closed")
     print([line for line in os.popen('tasklist').readlines() if LOGGER_APP_NAME in line])
@@ -49,7 +49,7 @@ def display_survey_time(survey, time_before_survey):
     current_timestamp = current_time.timestamp()
     
     time_from_last_survey = current_timestamp - completion_timestamp
-    print(f"[INFO] Last survey completed {round(time_from_last_survey)} seconds ago")
+    print("[INFO] Last survey completed {} seconds ago".format(round(time_from_last_survey)))
     
     return time_before_survey - time_from_last_survey
 
@@ -58,7 +58,7 @@ def display_survey(computer_name):
     log_file_controller.wait_user()
     
     print("[INFO] Displaying survey...")
-    webbrowser.open(f"https://stanforduniversity.qualtrics.com/jfe/form/SV_23QKD9ueJfXlQrz?computer={computer_name}")
+    webbrowser.open("https://stanforduniversity.qualtrics.com/jfe/form/SV_23QKD9ueJfXlQrz?computer={}".format(computer_name))
     print("[INFO] Survey displayed")
     
 
@@ -66,10 +66,10 @@ def is_study_user(user_name):
     with open("users.txt") as file:
         for user in file.readlines():
             if user.strip() == user_name:
-                print(f"[INFO] {user_name} is part of the study")
+                print("[INFO] {} is part of the study".format(user_name))
                 return True
     
-    print(f"[WARNING] {user_name} is not part of the study")
+    print("[WARNING] {} is not part of the study".format(user_name))
     return False
 
 
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     computer_name = os.environ["COMPUTERNAME"]
     user_name = os.environ["USERNAME"]
     
-    print(f"[INFO] Computer name: {computer_name}")
-    print(f"[INFO] User name: {user_name}")
+    print("[INFO] Computer name: {}".format(computer_name))
+    print("[INFO] User name: {}".format(user_name))
     
     # When the current user is not part of the study, we do not launch the logger
     if is_study_user(user_name):
@@ -96,7 +96,7 @@ if __name__ == "__main__":
             print("[INFO] Qualtrics API call to retrieve survey answers...")
             if not qualtrics.main():
                 print("[WARNING] Qualtrics API call issue - Process paused (logger still running)")
-                print(f"[INFO] Waiting time: {SLEEP_TIME} seconds")
+                print("[INFO] Waiting time: {} seconds".format(SLEEP_TIME))
                 time.sleep(SLEEP_TIME)
             
             # Find the last Qualtrics survey answered by the given user
@@ -117,7 +117,7 @@ if __name__ == "__main__":
                 display_survey(computer_name)
                 sleep_time = SLEEP_TIME
             
-            print(f"[INFO] Waiting time: {sleep_time} seconds")
+            print("[INFO] Waiting time: {} seconds".format(sleep_time))
             time.sleep(sleep_time)
             
         # Close MouseLogger.exe
