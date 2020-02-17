@@ -58,6 +58,17 @@ def display_survey(computer_name):
     print("[INFO] Displaying survey...")
     webbrowser.open(f"https://stanforduniversity.qualtrics.com/jfe/form/SV_23QKD9ueJfXlQrz?computer={computer_name}")
     print("[INFO] Survey displayed")
+    
+
+def is_study_user(user_name):
+    with open("users.txt") as file:
+        for user in file.readlines():
+            if user.strip() == user_name:
+                print(f"[INFO] {user_name} is part of the study")
+                return True
+    
+    print(f"[WARNING] {user_name} is not part of the study")
+    return False
 
 
 if __name__ == "__main__":
@@ -69,40 +80,40 @@ if __name__ == "__main__":
     print(f"[INFO] Computer name: {computer_name}")
     print(f"[INFO] User name: {user_name}")
     
-    # TODO: Add something to filter users (only launch logger for study subjects)
+    # When the current user is not part of the study, we do not launch the logger
+    if is_study_user(user_name):    
+        # Launch MouseLogger.exe
+        launch_logger()
     
-    # Launch MouseLogger.exe
-    launch_logger()
-
-    while True:
-        print("Process running...")
-        
-        # Qualtrics API call to get survey answers
-        # (which are stored in the "qualtrics_survey" folder)
-        print("[INFO] Qualtrics API call to retrieve survey answers...")
-        qualtrics.main()
-        # TODO: handle API call failed
-        
-        # Find the last Qualtrics survey answered by the given user
-        last_survey = csv_analyzer.get_last_survey(computer_name)
-        
-        if last_survey:
-            # Decide if we should display the survey or not
-            # This choice is based on the given time
-            waiting_time_before_survey = display_survey_time(last_survey, TIME_BEFORE_NEW_SURVEY)
+        while True:
+            print("Process running...")
             
-            if waiting_time_before_survey <= 0:
+            # Qualtrics API call to get survey answers
+            # (which are stored in the "qualtrics_survey" folder)
+            print("[INFO] Qualtrics API call to retrieve survey answers...")
+            qualtrics.main()
+            # TODO: handle API call failed
+            
+            # Find the last Qualtrics survey answered by the given user
+            last_survey = csv_analyzer.get_last_survey(computer_name)
+            
+            if last_survey:
+                # Decide if we should display the survey or not
+                # This choice is based on the given time
+                waiting_time_before_survey = display_survey_time(last_survey, TIME_BEFORE_NEW_SURVEY)
+                
+                if waiting_time_before_survey <= 0:
+                    display_survey(computer_name)
+                    sleep_time = SLEEP_TIME
+                else:
+                    print("[INFO] The survey does not need to be displayed")
+                    sleep_time = round(waiting_time_before_survey) + 1
+            else:
                 display_survey(computer_name)
                 sleep_time = SLEEP_TIME
-            else:
-                print("[INFO] The survey does not need to be displayed")
-                sleep_time = round(waiting_time_before_survey) + 1
-        else:
-            display_survey(computer_name)
-            sleep_time = SLEEP_TIME
-        
-        print(f"[INFO] Waiting time: {sleep_time} seconds")
-        time.sleep(sleep_time)
-        
-    # Close MouseLogger.exe
-    atexit.register(close_logger)
+            
+            print(f"[INFO] Waiting time: {sleep_time} seconds")
+            time.sleep(sleep_time)
+            
+        # Close MouseLogger.exe
+        atexit.register(close_logger)
