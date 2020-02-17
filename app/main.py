@@ -19,6 +19,8 @@ LOGGER_APP_NAME = "logger.exe"
 SLEEP_TIME = 1800              # Number of seconds between each survey check (in seconds)
 TIME_BEFORE_NEW_SURVEY = 7200  # Minimum number of seconds before displaying a new survey (in seconds)
 
+# Remove f-string (only Python 3.6+)
+
 
 def launch_logger():
     print("[INFO] Launching mouse logger...")
@@ -81,18 +83,21 @@ if __name__ == "__main__":
     print(f"[INFO] User name: {user_name}")
     
     # When the current user is not part of the study, we do not launch the logger
-    if is_study_user(user_name):    
+    if is_study_user(user_name):
+        
         # Launch MouseLogger.exe
         launch_logger()
     
         while True:
-            print("Process running...")
+            print("[INFO] Process running...")
             
             # Qualtrics API call to get survey answers
             # (which are stored in the "qualtrics_survey" folder)
             print("[INFO] Qualtrics API call to retrieve survey answers...")
-            qualtrics.main()
-            # TODO: handle API call failed
+            if not qualtrics.main():
+                print("[WARNING] Qualtrics API call issue - Process paused (logger still running)")
+                print(f"[INFO] Waiting time: {SLEEP_TIME} seconds")
+                time.sleep(SLEEP_TIME)
             
             # Find the last Qualtrics survey answered by the given user
             last_survey = csv_analyzer.get_last_survey(computer_name)
