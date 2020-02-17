@@ -20,7 +20,7 @@ import log_file_controller
 
 
 # TODO: launch module with parameter (%python% main.py -dev)
-# TODO: replace computer_name by user_name (or add user_name at least)
+# TODO: error handling when analyzing survey answers
 
 
 def setup_environment_variables(env="PROD"):
@@ -43,7 +43,7 @@ def launch_logger(app_name):
     try:
         win32api.WinExec(app_name)
         print("[INFO] Mouse logger launched")
-        print([line for line in os.popen('tasklist').readlines() if app_name in line])
+        print([line for line in os.popen("tasklist").readlines() if app_name in line])
     except:
         print("[ERROR] Mouse logger could not be launched properly")
 
@@ -53,7 +53,7 @@ def close_logger(app_name):
     os.system("taskkill /f /im {}".format(app_name))
 
     print("[INFO] Mouse logger closed")
-    print([line for line in os.popen('tasklist').readlines() if app_name in line])
+    print([line for line in os.popen("tasklist").readlines() if app_name in line])
 
 
 def display_survey_time(survey, time_before_survey):
@@ -70,11 +70,17 @@ def display_survey_time(survey, time_before_survey):
     return time_before_survey - time_from_last_survey
 
 
-def display_survey(computer_name):
+def display_survey(survey_id, computer_name, user_name):
     log_file_controller.wait_user()
     
     print("[INFO] Displaying survey...")
-    webbrowser.open("https://stanforduniversity.qualtrics.com/jfe/form/SV_23QKD9ueJfXlQrz?computer={}".format(computer_name))
+    webbrowser.open(
+        "https://stanforduniversity.qualtrics.com/jfe/form/{}?computer_name={}&user_name={}".format(
+            survey_id,
+            computer_name,
+            user_name
+        )
+    )
     print("[INFO] Survey displayed")
     
 
@@ -94,6 +100,7 @@ if __name__ == "__main__" and setup_environment_variables("DEV"):
     
     COMPUTER_NAME = os.environ["COMPUTERNAME"]
     USER_NAME = os.environ["USERNAME"]
+    SURVEY_ID = os.environ["SURVEY_ID"]
     TIME_BEFORE_NEW_CHECK = int(os.environ.get("TIME_BEFORE_NEW_CHECK"))
     TIME_BEFORE_NEW_SURVEY = int(os.environ.get("TIME_BEFORE_NEW_SURVEY"))
     
@@ -118,7 +125,7 @@ if __name__ == "__main__" and setup_environment_variables("DEV"):
                 time.sleep(TIME_BEFORE_NEW_CHECK)
             
             # Find the last Qualtrics survey answered by the given user
-            last_survey = csv_analyzer.get_last_survey(COMPUTER_NAME)
+            last_survey = csv_analyzer.get_last_survey(USER_NAME)
             
             if last_survey:
                 # Decide if we should display the survey or not
@@ -126,13 +133,13 @@ if __name__ == "__main__" and setup_environment_variables("DEV"):
                 waiting_time_before_survey = display_survey_time(last_survey, TIME_BEFORE_NEW_SURVEY)
                 
                 if waiting_time_before_survey <= 0:
-                    display_survey(COMPUTER_NAME)
+                    display_survey(SURVEY_ID, COMPUTER_NAME, USER_NAME)
                     sleep_time = TIME_BEFORE_NEW_CHECK
                 else:
                     print("[INFO] The survey does not need to be displayed")
                     sleep_time = round(waiting_time_before_survey) + 1
             else:
-                display_survey(COMPUTER_NAME)
+                display_survey(SURVEY_ID, COMPUTER_NAME, USER_NAME)
                 sleep_time = TIME_BEFORE_NEW_CHECK
             
             print("[INFO] Waiting time: {} seconds".format(sleep_time))
