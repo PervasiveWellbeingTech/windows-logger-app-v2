@@ -6,6 +6,7 @@ Created on Wed Feb 12 18:15:33 2020
 """
 
 import os
+import sys
 import time
 import datetime
 import win32api
@@ -14,24 +15,23 @@ import qualtrics
 import csv_analyzer
 import log_file_controller
 
-#LOGGER_APP_NAME = "logger.exe"
-#TIME_BEFORE_NEW_CHECK = 1800   # Number of seconds between each survey check (in seconds)
-#TIME_BEFORE_NEW_SURVEY = 7200  # Minimum number of seconds before displaying a new survey (in seconds)
-
-
-# TODO: launch module with parameter (%python% main.py -dev)
 # TODO: error handling when analyzing survey answers
 
 
-def setup_environment_variables(env="PROD"):
-    conf_file_name = "conf_prod.txt" if env == "PROD" else "conf_dev.txt"
+def setup_environment_variables():
+    env = "prod"
+    
+    if len(sys.argv) > 1:
+        env = sys.argv[1].lower()
+
+    conf_file_name = "conf_{}.txt".format(env)
     
     try:
         with open(conf_file_name) as file:
             for line in file.readlines():
                 key, value = line.strip().split(",")
                 os.environ[key] = value
-        print("[INFO] Environment variables setup completed")
+        print("[INFO] Environment variables setup completed ({} env)".format(env))
         return True
     except Exception as err:
         print("[ERROR] Error during the environment variables setup: {}".format(err))
@@ -95,7 +95,7 @@ def is_study_user(user_name):
     return False
 
 
-if __name__ == "__main__" and setup_environment_variables("DEV"):
+if __name__ == "__main__" and setup_environment_variables():
     close_logger(os.environ.get("LOGGER_APP_NAME"))
     
     COMPUTER_NAME = os.environ["COMPUTERNAME"]
@@ -136,7 +136,7 @@ if __name__ == "__main__" and setup_environment_variables("DEV"):
                     display_survey(SURVEY_ID, COMPUTER_NAME, USER_NAME)
                     sleep_time = TIME_BEFORE_NEW_CHECK
                 else:
-                    print("[INFO] The survey does not need to be displayed")
+                    print("[INFO] The survey does not need to be displayed right now")
                     sleep_time = round(waiting_time_before_survey) + 1
             else:
                 display_survey(SURVEY_ID, COMPUTER_NAME, USER_NAME)

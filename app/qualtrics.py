@@ -75,7 +75,7 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
     try:
         fileId = requestCheckResponse.json()["result"]["fileId"]
         # Step 3: Downloading file
-        requestDownloadUrl = baseUrl + fileId + '/file'
+        requestDownloadUrl = baseUrl + fileId + "/file"
         requestDownload = requests.request("GET", requestDownloadUrl, headers=headers, stream=True)
     except Exception as err:
         print("[ERROR] Error during downloading Qualtrics survey file: {}".format(err))
@@ -107,7 +107,7 @@ def main():
         print ("[ERROR] fileFormat must be either csv, tsv, or spss")
         sys.exit(2)
  
-    r = re.compile('^SV_.*')
+    r = re.compile("^SV_.*")
     m = r.match(surveyId)
     if not m:
        print ("[ERROR] surveyId must match ^SV_.*")
