@@ -24,19 +24,22 @@ def get_surveys(user_name):
             return answers
         else:
             print("[WARNING] No answer found for {}".format(user_name))
-    except:
-        print("[ERROR] Survey file not found")
+    except Exception as err:
+        print("[ERROR] Survey file not found: {}".format(err))
 
 
 def get_last_survey(user_name):
     surveys = get_surveys(user_name)
     
-    if surveys:
-        # Select only surveys with 100% completion
-        surveys = [survey for survey in surveys if survey[4] == "100"]
-        
+    try:
         if surveys:
-            # Sort surveys according to the time of completion
-            surveys.sort(key=lambda x: x[1])
-        
-            return surveys[-1]
+            # Select only surveys with 100% completion
+            surveys = [survey for survey in surveys if survey[4] == "100"]
+            
+            if surveys:
+                # Sort surveys according to the time of completion
+                surveys.sort(key=lambda x: x[1])
+            
+                return surveys[-1]
+    except Exception as err:
+        print("[ERROR] Survey answer parsing error: {}".format(err))

@@ -15,8 +15,6 @@ import qualtrics
 import csv_analyzer
 import log_file_controller
 
-# TODO: error handling when analyzing survey answers
-
 
 def setup_environment_variables():
     env = "prod"
