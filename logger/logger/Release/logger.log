@@ -1,6 +1,6 @@
 ﻿  logger.cpp
   Generating code
   Previous IPDB not found, fall back to full compilation.
-  All 123 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 126 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   logger.vcxproj -> C:\Users\Hugo\Documents\stanford\projects\windows_logger_app_v2\logger\Release\logger.exe

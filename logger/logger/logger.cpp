@@ -48,6 +48,14 @@ std::wstring getUserName() {
 	return infoBuf;
 }
 
+std::wstring getEnvironmentVariable(LPCWSTR variableName) {
+	TCHAR infoBuf[INFO_BUFFER_SIZE];
+	DWORD bufCharCount = INFO_BUFFER_SIZE;
+
+	GetEnvironmentVariable(variableName, infoBuf, bufCharCount);  // Get the name of the computer and store it in infoBuf
+	return infoBuf;
+}
+
 int openFile(LPCWSTR fileName, LPCWSTR folderName, HANDLE& hFile) {
 	// Open log file for writing
 	if (CreateDirectory(folderName, NULL) || ERROR_ALREADY_EXISTS == GetLastError()) {
@@ -66,7 +74,7 @@ int openFile(LPCWSTR fileName, LPCWSTR folderName, HANDLE& hFile) {
 class FileManager {
 public:
 	std::wstring computerFolderName = L"data_computer/";
-	std::wstring rawInputFolderName = L"data_raw_input/";
+	std::wstring rawInputFolderName = getEnvironmentVariable(L"DATA_STORAGE_PATH") + getUserName() + L"/";  //L"data_raw_input/user_name/";
 	LPCWSTR computerFileName;
 	LPCWSTR rawInputFileName;
 	HANDLE computerFile;
@@ -123,7 +131,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		wchar_t* currentTimestamp = _i64tow(startTimestamp, tempBuffer, 10);
 
 		std::wstring fileName = currentTimestamp;
-		std::wstring concattedStdstr = fileManager.rawInputFolderName + fileName + L".log";
+		std::wstring concattedStdstr = fileManager.rawInputFolderName + fileName + L"_" + getUserName() + L".log";
 		fileManager.rawInputFileName = concattedStdstr.c_str();
 
 		if (openFile(fileManager.rawInputFileName, fileManager.rawInputFolderName.c_str(), fileManager.rawInputFile) == 0) {
@@ -181,7 +189,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			wchar_t* currentTimestampStr = _i64tow(currentTimestamp, tempBuffer, 10);
 
 			std::wstring fileName(currentTimestampStr);
-			std::wstring concattedStdstr = fileManager.rawInputFolderName + fileName + L".log";
+			std::wstring concattedStdstr = fileManager.rawInputFolderName + fileName + L"_" + getUserName() + L".log";
 			fileManager.rawInputFileName = concattedStdstr.c_str();
 
 			CloseHandle(fileManager.rawInputFile);  // Close the previous raw input file

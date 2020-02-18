@@ -11,6 +11,7 @@ import datetime
 
 
 def find_last_file(folder_path):
+    print("FOLDER PATH", folder_path)
     last_modification_timestamp = 0
     last_modified_file_name = None
     
