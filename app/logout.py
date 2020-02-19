@@ -9,4 +9,4 @@ import os
 import main
 
 main.setup_environment_variables()
-main.close_logger(os.environ.get("LOGGER_APP_NAME"))
+main.close_app(os.environ.get("LOGGER_APP_NAME"))

@@ -12,11 +12,36 @@ import datetime
 import win32api
 import webbrowser
 import qualtrics
-import csv_analyzer
+import survey_analyzer
 import log_file_controller
 
 
 def setup_environment_variables():
+    """
+    Creates environment variables according to a configuration file.
+    
+    The first step is to determine which configuration file to use.
+    All configuration files start by "conf_" and end by ".txt".
+    By default we use the "conf_prod.txt" file, but we can specify a particular
+    file when we launch the script in adding a parameter a the end of the command:
+        %python% main.py custom
+    with this line, we will use the "conf_custom.txt" file to setup our
+    environment variables.
+    
+    The second and last step is to parse this configuration file.
+    The configuration file must have the following format:
+        key_1,value_1
+        ...
+        key_n,value_n
+        
+    One key-value pair (separated by a comma) per line.
+    This way, each line will define one environment variable.
+    
+    Then, each environment variable defined here can be used like this:
+        os.environ.get("key_1")
+    to get "value_1" for example
+    """
+    
     env = "prod"
     
     if len(sys.argv) > 1:
@@ -36,44 +61,43 @@ def setup_environment_variables():
         return False
 
 
-def launch_logger(app_name):
-    print("[INFO] Launching mouse logger...")
+def launch_app(app_name):
+    """Used to launch a Win32 application, given the application name."""
+    
+    print("[INFO] Launching {}...".format(app_name))
     try:
         win32api.WinExec(app_name)
-        print("[INFO] Mouse logger launched")
+        print("[INFO] {} launched".format(app_name))
         print([line for line in os.popen("tasklist").readlines() if app_name in line])
     except:
-        print("[ERROR] Mouse logger could not be launched properly")
+        print("[ERROR] {} could not be launched properly".format(app_name))
 
 
-def close_logger(app_name):
-    print("[INFO] Closing mouse logger...")
+def close_app(app_name):
+    """Used to kill a process, given its name"""
+    
+    print("[INFO] Closing {}...".format(app_name))
     os.system("taskkill /f /im {}".format(app_name))
 
-    print("[INFO] Mouse logger closed")
-    print([line for line in os.popen("tasklist").readlines() if app_name in line])
-
-
-# TODO: Factorize launch/close_app (same function for logger and notification)
-def launch_notification(app_name):
-    print("[INFO] Launching notification...")
-    try:
-        win32api.WinExec(app_name)
-        print("[INFO] Notification launched")
-        print([line for line in os.popen("tasklist").readlines() if app_name in line])
-    except:
-        print("[ERROR] Notification could not be launched properly")    
-
-
-def close_notification(app_name):
-    print("[INFO] Closing notification...")
-    os.system("taskkill /f /im {}".format(app_name))
-
-    print("[INFO] Notification closed")
+    print("[INFO] {} closed".format(app_name))
     print([line for line in os.popen("tasklist").readlines() if app_name in line])
 
 
 def display_survey_time(survey, time_before_survey):
+    """
+    Given a survey, the function determines how many time (in seconds) we have 
+    to wait before displaying the next survey.
+    This time is calculated using time_before_survey.
+    
+    Schematically:
+        
+      given survey       now <-- T --> next survey
+           |______________|_____________|
+           <---- time_before_survey ---->
+       
+    The function returns T (the time we have to wait before displaying the new survey)
+    """
+    
     completion_time_survey = survey[1]
     completion_time = datetime.datetime.strptime(completion_time_survey, "%Y-%m-%d %H:%M:%S")
     completion_timestamp = completion_time.timestamp()
@@ -88,12 +112,24 @@ def display_survey_time(survey, time_before_survey):
 
 
 def display_survey(survey_id, computer_name, user_name):
+    """
+    This function is called when we want to display the survey.
+    Before displaying the survey, we wait until the user is there.
+    
+    Then we check the NOTIFICATION environment variable:
+        - if its value is "active" we launch the notification application
+        - else, we display the survey directly in the default browser
+    
+    The parameters survey_id, computer_name and user_name are used to build the link
+    to the survey.
+    """
+    
     log_file_controller.wait_user()
     
-    if os.environ["NOTIFICATION"] == "active":
-        NOTIFICATION_APP_NAME = os.environ["NOTIFICATION_APP_NAME"]
-        close_notification(NOTIFICATION_APP_NAME)
-        launch_notification(NOTIFICATION_APP_NAME)
+    if os.environ.get("NOTIFICATION") == "active":
+        NOTIFICATION_APP_NAME = os.environ.get("NOTIFICATION_APP_NAME")
+        close_app(NOTIFICATION_APP_NAME)
+        launch_app(NOTIFICATION_APP_NAME)
     else:
         print("[INFO] Displaying survey...")
         webbrowser.open(
@@ -107,6 +143,8 @@ def display_survey(survey_id, computer_name, user_name):
     
 
 def is_study_user(user_name):
+    """Returns True if the given user is in the "users.txt" file, else False."""
+    
     with open("users.txt") as file:
         for user in file.readlines():
             if user.strip() == user_name:
@@ -118,11 +156,11 @@ def is_study_user(user_name):
 
 
 if __name__ == "__main__" and setup_environment_variables():
-    close_logger(os.environ.get("LOGGER_APP_NAME"))
+    close_app(os.environ.get("LOGGER_APP_NAME"))
     
-    COMPUTER_NAME = os.environ["COMPUTERNAME"]
-    USER_NAME = os.environ["USERNAME"]
-    SURVEY_ID = os.environ["SURVEY_ID"]
+    COMPUTER_NAME = os.environ.get("COMPUTERNAME")
+    USER_NAME = os.environ.get("USERNAME")
+    SURVEY_ID = os.environ.get("SURVEY_ID")
     TIME_BEFORE_NEW_CHECK = int(os.environ.get("TIME_BEFORE_NEW_CHECK"))
     TIME_BEFORE_NEW_SURVEY = int(os.environ.get("TIME_BEFORE_NEW_SURVEY"))
     
@@ -133,7 +171,7 @@ if __name__ == "__main__" and setup_environment_variables():
     if is_study_user(USER_NAME):
         
         # Launch MouseLogger.exe
-        launch_logger(os.environ.get("LOGGER_APP_NAME"))
+        launch_app(os.environ.get("LOGGER_APP_NAME"))
     
         while True:
             print("[INFO] Process running...")
@@ -147,7 +185,7 @@ if __name__ == "__main__" and setup_environment_variables():
                 time.sleep(TIME_BEFORE_NEW_CHECK)
             
             # Find the last Qualtrics survey answered by the given user
-            last_survey = csv_analyzer.get_last_survey(USER_NAME)
+            last_survey = survey_analyzer.get_last_survey(USER_NAME)
             
             if last_survey:
                 # Decide if we should display the survey or not
