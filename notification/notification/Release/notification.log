@@ -1,0 +1,7 @@
+﻿  Main.cpp
+  wintoastlib.cpp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 829 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  notification.vcxproj -> C:\Users\Hugo\Documents\stanford\projects\windows_logger_app_v2\notification\Release\notification.exe
