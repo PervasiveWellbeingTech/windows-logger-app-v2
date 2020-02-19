@@ -10,3 +10,4 @@ import main
 
 main.setup_environment_variables()
 main.close_app(os.environ.get("LOGGER_APP_NAME"))
+main.close_app(os.environ.get("NOTIFICATION_APP_NAME"))
