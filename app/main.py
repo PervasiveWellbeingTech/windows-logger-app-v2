@@ -54,6 +54,25 @@ def close_logger(app_name):
     print([line for line in os.popen("tasklist").readlines() if app_name in line])
 
 
+# TODO: Factorize launch/close_app (same function for logger and notification)
+def launch_notification(app_name):
+    print("[INFO] Launching notification...")
+    try:
+        win32api.WinExec(app_name)
+        print("[INFO] Notification launched")
+        print([line for line in os.popen("tasklist").readlines() if app_name in line])
+    except:
+        print("[ERROR] Notification could not be launched properly")    
+
+
+def close_notification(app_name):
+    print("[INFO] Closing notification...")
+    os.system("taskkill /f /im {}".format(app_name))
+
+    print("[INFO] Notification closed")
+    print([line for line in os.popen("tasklist").readlines() if app_name in line])
+
+
 def display_survey_time(survey, time_before_survey):
     completion_time_survey = survey[1]
     completion_time = datetime.datetime.strptime(completion_time_survey, "%Y-%m-%d %H:%M:%S")
@@ -71,15 +90,20 @@ def display_survey_time(survey, time_before_survey):
 def display_survey(survey_id, computer_name, user_name):
     log_file_controller.wait_user()
     
-    print("[INFO] Displaying survey...")
-    webbrowser.open(
-        "https://stanforduniversity.qualtrics.com/jfe/form/{}?computer_name={}&user_name={}".format(
-            survey_id,
-            computer_name,
-            user_name
+    if os.environ["NOTIFICATION"] == "active":
+        NOTIFICATION_APP_NAME = os.environ["NOTIFICATION_APP_NAME"]
+        close_notification(NOTIFICATION_APP_NAME)
+        launch_notification(NOTIFICATION_APP_NAME)
+    else:
+        print("[INFO] Displaying survey...")
+        webbrowser.open(
+            "https://stanforduniversity.qualtrics.com/jfe/form/{}?computer_name={}&user_name={}".format(
+                survey_id,
+                computer_name,
+                user_name
+            )
         )
-    )
-    print("[INFO] Survey displayed")
+        print("[INFO] Survey displayed")
     
 
 def is_study_user(user_name):

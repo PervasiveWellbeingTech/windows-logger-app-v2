@@ -44,35 +44,33 @@ std::wstring getUserName() {
 	return infoBuf;
 }
 
+std::wstring getEnvironmentVariable(LPCWSTR variableName) {
+	TCHAR infoBuf[INFO_BUFFER_SIZE];
+	DWORD bufCharCount = INFO_BUFFER_SIZE;
 
-
+	GetEnvironmentVariable(variableName, infoBuf, bufCharCount);  // Get the name of the computer and store it in infoBuf
+	return infoBuf;
+}
 
 class CustomHandler : public IWinToastHandler {
 public:
 
 	void toastActivated() const {
-		std::wstring surveyLink = L"https://stanforduniversity.qualtrics.com/jfe/form/SV_23QKD9ueJfXlQrz?computer_name=" + getComputerName() + L"&user_name=" + getUserName();
+		std::wstring surveyLink = L"https://stanforduniversity.qualtrics.com/jfe/form/" + getEnvironmentVariable(L"SURVEY_ID") + L"?computer_name=" + getComputerName() + L"&user_name=" + getUserName();
 		ShellExecute(NULL, L"open", surveyLink.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+		DestroyWindow(hWnd);
 	}
 
 	void toastActivated(int actionIndex) const {
-		std::wcout << L"The user clicked on button #" << actionIndex << L" in this toast" << std::endl;
+		DestroyWindow(hWnd);
 	}
 
-	void toastFailed() const {}
+	void toastFailed() const {
+		DestroyWindow(hWnd);
+	}
 
 	void toastDismissed(WinToastDismissalReason state) const {
-		CHAR message[300] = "";
-		switch (state) {
-		case UserCanceled:
-			break;
-		case ApplicationHidden:
-			break;
-		case TimedOut:
-			break;
-		default:
-			break;
-		}
+		DestroyWindow(hWnd);
 	}
 };
 
@@ -113,10 +111,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hWnd = CreateWindow(wc.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
 
 	while (GetMessage(&msg, hWnd, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		//TranslateMessage(&msg);
+		//DispatchMessage(&msg);
 	}
-	//return msg.wParam;
+
 	return 0;
 }
 
