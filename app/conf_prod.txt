@@ -1,0 +1,12 @@
+API_TOKEN,[insert api token here]
+DATA_CENTER,[insert data center here]
+DATA_STORAGE_PATH,data_raw_input/
+FILE_FORMAT,csv
+LOGGER_APP_NAME,logger.exe
+NOTIFICATION,inactive
+NOTIFICATION_APP_NAME,notification.exe
+SURVEY_ID,[insert survey id here]
+SURVEY_NAME,[insert survey name here]
+TIME_BEFORE_AVAILABILITY_CHECK,5
+TIME_BEFORE_NEW_CHECK,1800
+TIME_BEFORE_NEW_SURVEY,2500
