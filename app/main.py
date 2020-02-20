@@ -145,7 +145,7 @@ def display_survey(survey_id, computer_name, user_name):
 def is_study_user(user_name):
     """Returns True if the given user is in the "users.txt" file, else False."""
     
-    with open("users.txt") as file:
+    with open(os.environ.get("USERS_WHITELIST_FILE")) as file:
         for user in file.readlines():
             if user.strip() == user_name:
                 print("[INFO] {} is part of the study".format(user_name))
