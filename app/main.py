@@ -143,7 +143,7 @@ def display_survey(survey_id, computer_name, user_name):
     
 
 def is_study_user(user_name):
-    """Returns True if the given user is in the "users.txt" file, else False."""
+    """Returns True if the given user is in the USERS_WHITELIST file, else False."""
     
     with open(os.environ.get("USERS_WHITELIST_FILE")) as file:
         for user in file.readlines():
@@ -159,7 +159,7 @@ if __name__ == "__main__" and setup_environment_variables():
     close_app(os.environ.get("LOGGER_APP_NAME"))
     
     COMPUTER_NAME = os.environ.get("COMPUTERNAME")
-    USER_NAME = os.environ.get("USERNAME")
+    USER_NAME = os.environ.get(os.environ.get("USERNAME_KEY"))
     SURVEY_ID = os.environ.get("SURVEY_ID")
     TIME_BEFORE_NEW_CHECK = int(os.environ.get("TIME_BEFORE_NEW_CHECK"))
     TIME_BEFORE_NEW_SURVEY = int(os.environ.get("TIME_BEFORE_NEW_SURVEY"))
