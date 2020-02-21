@@ -43,16 +43,16 @@ There are three cases:
 - if the user answered the survey a long time ago, we move on to the next step
 - if the user answered the survey recently, we wait
 
-Now, to know if the user already answered a survey or when he answered it the last time, we use the Qualtrics API.  
+Now, to know if the user already answered a survey or when he answered it the last time, we use the [Qualtrics API](https://api.qualtrics.com/docs).   
 We call the Qualtrics API to get a list of all the answered surveys (the code for the call is in the **qualtrics.py** file
-and the list of the answered surveys is stored in the "qualtrics_survey" folder).
+and the list of the answered surveys is stored in the "qualtrics_survey" folder). Then we do basic parsing to determine when the current
+user last filled out the survey (code in the **survey_analyzer.py** file).
 
 #### Checking the presence of the user
 
 If we assume that the user is present when he uses his mouse, then we can detect if he is actually here or not because we are
 recording all the mouse movements (with the **logger.exe** application).  
-So we just have to look for the most recent mouse data file and check if it has been modified recently. If it is the case,
-we move on to the next step, else we wait for the user to move the mouse.
+So we just have to look for the most recent mouse data file and check if it has been modified recently (code in the **log_file_controller.py** file). If it is the case, we move on to the next step, else we wait for the user to move the mouse.
 
 #### Displaying the survey
 
@@ -63,6 +63,8 @@ In both cases, the user can choose to not answer the survey in closing the web p
 
 If we want to use the notification way, we launch the **notification.exe** windows application that will display it.  
 The choice between these two options is done using the configuration file (cf. below).
+
+The URL of the web page is dynamically built to include the user ID so that we know who answered a survey without having to directly ask for their identity to users.
 
 ### Configuration file
 
@@ -89,10 +91,102 @@ Variables contained is the configuration file (alphabetical order):
 - `USERNAME_KEY`: this value has to be the name of the environment variable that the program will use to get the user ID (for example, if the user ID is stored in the "USERNAME" environment variable, put "USERNAME_KEY,USERNAME" in the configuration file)
 - `USERS_WHITELIST_FILE`: path to the file that contains the users whitelist (example: "folder/users.txt"). Used to know if the user is  part of the study or not
 
+The configuration file used by default is **conf_prod.txt**. But you can create as many configuration files as you want.  
+The name of the file must respect the format: "conf_" + name + ".txt". For example, you can add a **conf_custom.txt** file to the
+app folder.
+
+Then, to use this configuration file instead of the default one, you can launch the **main.py** file in adding a parameter (command line):
+```
+python main.py custom
+```
+(where `python` is the python path on your system)
+
 ## logger
+
+This application records all mouse movements (only, no keyboard logging).
+More precisely:
+- x and y motions of the mouse
+- x and y coordinates of the cursor (screen)
+- mouse wheel state (if there is a wheel)
+
+### Code
+
+The application is a simple Windows App that uses the Win32 API to have a direct access to hardware.
+All the code is contained in one C++ file **Main.cpp**.
+Developed with Microsoft Visual Studio 2019.
+
+#### How a Windows application works ? (roughly speaking)
+
+A Windows application needs two essential components: a window (yay) and procedure.
+
+The window is used to receive all messages (events, for example when the user clicks on a button) from Windows.
+This window is represented by the `WinMain` function in the code.
+
+When the window receives a message, it transmits the message to the procedure.
+The procedure contains the process to follow for each message (event) we want to handle.
+The procedure is represented by the `WndProc` function, which contains a list (switch-case) of all the events we are interested in.
+
+#### How this application works ?
+
+##### Window
+This application runs as a service (it is invisible).
+So the window should be invisible. To do that we can use a "Message-only window" whose name is pretty explicit: it is used only to receive messages and can not be used to interact with it (it is invisible actually).
+
+To setup this kind of window we just have to specify `HWND_MESSAGE` as a parameter of the `CreateWindow` function (in `WinMain`).
+
+##### Procedure
+The procedure handles three messages:
+- `WM_CREATE`
+- `WM_DESTROY`
+- `WM_INPUT`
+
+`WM_CREATE` is received when the window is created. We create file for writing data in it and we specify which data we want to get from the Raw Input interface. To specify that we use the two following lines:
+```
+rid.usUsagePage = 1;
+rid.usUsage = 2;
+```
+(`rid` for "Raw Input Device")
+
+`rid.usUsagePage = 1` means that we want to register generic desktop controls
+In this category "generic desktop controls" we can choose more precisely what we want with `usUsage`.
+`rid.usUsage = 2` means that we want mouse data (6 is used to get keyboard data for example).
+
+`WM_DESTROY` is received when the window is destroyed.
+
+`WM_INPUT` is the core message of the application. It is received every time we have a new device input (mouse movement for example).
+Here is how we get data:
+```
+raw->data.mouse.usButtonFlags,
+raw->data.mouse.usButtonData,
+raw->data.mouse.lLastX,
+raw->data.mouse.lLastY,
+```
+
+`usButtonFlags` contains an hexadecimal number that corresponds to the mouse state, see the "RAWINPUT (mouse)" link at the bottom to interpret this number.  
+`usButtonData` contains the mouse wheel "value" when the mouse wheel is used (cf. "Mouse wheel" link at the bottom for more information on this value).  
+`lLastX` and `lLastY` represent x and y motions of the mouse  
+(cf. RAWINPUT links for more details)
+
+To get the cursor position on the screen we also use the `GetCursorPos` function.
+
+Another thing we do when we receive a `WM_INPUT` message is to check the time.
+Indeed, we change the storage file every hour of inactivity, which means that if the mouse is not used for one hour, we will create a new file to store data. It avoids us having all the data in a single file and allows us to divide them into kind of "user sessions".
+
+Lines are stored in this format: `timestamp,usButtonFlags,usButtonData,lLastX,lLastY,cursorX,cursorY` (timestamp in milliseconds).
+
+
+#### Links that helped me to build this application
+Win32 app documentation: https://docs.microsoft.com/en-us/windows/win32/  
+Window app with Visual Studio: https://docs.microsoft.com/en-us/cpp/windows/walkthrough-creating-windows-desktop-applications-cpp?view=vs-2019  
+
+Detailed explanation for a keylogger app: https://www.codeproject.com/Articles/297312/Minimal-Key-Logger-using-RAWINPUT  
+
+RAWINPUT: https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-rawinput?redirectedfrom=MSDN  
+RAWINPUT (mouse): https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-rawmouse  
+Mouse wheel: https://docs.microsoft.com/en-us/windows/win32/learnwin32/other-mouse-operations#mouse-wheel
+GetCursorPos: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getcursorpos?redirectedfrom=MSDN  
 
 ## notification
 
-## Links
-
-Qualtrics API documentation: https://api.qualtrics.com/docs
+Same code structure than the logger application.  
+We use a library to display notifications: https://github.com/mohabouje/WinToast
