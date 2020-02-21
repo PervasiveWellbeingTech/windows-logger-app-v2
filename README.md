@@ -64,6 +64,31 @@ In both cases, the user can choose to not answer the survey in closing the web p
 If we want to use the notification way, we launch the **notification.exe** windows application that will display it.  
 The choice between these two options is done using the configuration file (cf. below).
 
+### Configuration file
+
+The configuration file is a very important piece of the application. It allows us to change the behavior of the application or to
+specify some values without having to directly modify the code.
+
+The configuration file contains one pair name-value, name and value are separated by a comma, per line. It is very important to 
+respect this syntax. Any typo can lead to an unexpected behavior of the application.
+
+Variables contained is the configuration file (alphabetical order):
+- `API_TOKEN`: token used by the Qualtrics API (this value must be kept secret)
+- `DATA_CENTER`: information used by the Qualtrics API
+- `DATA_STORAGE_PATH`: path to the folder where the mouse data files are stored (very important to end with "/", like "test_folder/")
+- `FILE_FORMAT`: file format of the survey answers received after the Qualtrics API call. At the moment, the only supported format by the application is "csv"
+- `LOGGER_APP_NAME`: the name of the mouse logger app **logger.exe**
+- `NOTIFICATION`: if it is set to "active", we display the survey with a notification before. Else, we display the survey directly
+- `NOTIFICATION_APP_NAME`: the name of the notification app **notification.exe**
+- `SSL_VERIFICATION`: if it is set to "inactive", the SSL verification will be ignored for the Qualtrics API calls. This should be used only for test purpose and never in production environment.
+- `SURVEY_ID`: Qualtrics survey ID
+- `SURVEY_NAME`: Qualtrics survey name (case-sensitive)
+- `TIME_BEFORE_AVAILABILITY_CHECK`: time (in seconds) before checking again the user's presence (when he is not here)
+- `TIME_BEFORE_NEW_CHECK`: time (in seconds) before checking if the user answered the last displayed survey
+- `TIME_BEFORE_NEW_SURVEY`: minimum time (in seconds) between two surveys
+- `USERNAME_KEY`: this value has to be the name of the environment variable that the program will use to get the user ID (for example, if the user ID is stored in the "USERNAME" environment variable, put "USERNAME_KEY,USERNAME" in the configuration file)
+- `USERS_WHITELIST_FILE`: path to the file that contains the users whitelist (example: "folder/users.txt"). Used to know if the user is  part of the study or not
+
 ## logger
 
 ## notification
