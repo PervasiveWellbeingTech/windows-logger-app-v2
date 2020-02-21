@@ -36,20 +36,16 @@ std::wstring getComputerName() {
 	return infoBuf;
 }
 
-std::wstring getUserName() {
-	TCHAR infoBuf[INFO_BUFFER_SIZE];
-	DWORD bufCharCount = INFO_BUFFER_SIZE;
-
-	GetUserName(infoBuf, &bufCharCount);  // Get the user name and store it in infoBuf
-	return infoBuf;
-}
-
 std::wstring getEnvironmentVariable(LPCWSTR variableName) {
 	TCHAR infoBuf[INFO_BUFFER_SIZE];
 	DWORD bufCharCount = INFO_BUFFER_SIZE;
 
 	GetEnvironmentVariable(variableName, infoBuf, bufCharCount);  // Get the name of the computer and store it in infoBuf
 	return infoBuf;
+}
+
+std::wstring getUserName() {
+	return getEnvironmentVariable(getEnvironmentVariable(L"USERNAME_KEY").c_str());
 }
 
 class CustomHandler : public IWinToastHandler {
