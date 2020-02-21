@@ -52,8 +52,10 @@ def setup_environment_variables():
     try:
         with open(conf_file_name) as file:
             for line in file.readlines():
-                key, value = line.strip().split(",")
-                os.environ[key] = value
+                elements = line.strip().split(",")
+                if len(elements) == 2:
+                    key, value = elements
+                    os.environ[key] = value
         print("[INFO] Environment variables setup completed ({} env)".format(env))
         return True
     except Exception as err:
@@ -124,7 +126,7 @@ def display_survey(survey_id, computer_name, user_name):
     to the survey.
     """
     
-    log_file_controller.wait_user()
+    log_file_controller.wait_user(user_name)
     
     if os.environ.get("NOTIFICATION") == "active":
         NOTIFICATION_APP_NAME = os.environ.get("NOTIFICATION_APP_NAME")

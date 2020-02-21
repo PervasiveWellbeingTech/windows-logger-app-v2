@@ -40,7 +40,7 @@ def is_last_modification_recent(file_name, folder_path, time_threshold):
     return current_timestamp - modification_timestamp < time_threshold
 
 
-def wait_user():
+def wait_user(user_name):
     """
     Sleeps while the user is not here.
     To determine if the user is here, we check whether the mouse moves or not.
@@ -59,7 +59,7 @@ def wait_user():
     
     print("[INFO] Waiting for user availability...")
     
-    DATA_STORAGE_PATH = os.environ.get("DATA_STORAGE_PATH")
+    DATA_STORAGE_PATH = os.environ.get("DATA_STORAGE_PATH") + user_name + "/"
     # Time to wait between each iteration of the process (in seconds)
     TIME_BEFORE_AVAILABILITY_CHECK = int(os.environ.get("TIME_BEFORE_AVAILABILITY_CHECK"))
     
