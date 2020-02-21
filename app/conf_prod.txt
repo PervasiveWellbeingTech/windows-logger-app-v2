@@ -5,6 +5,7 @@ FILE_FORMAT,csv
 LOGGER_APP_NAME,logger.exe
 NOTIFICATION,inactive
 NOTIFICATION_APP_NAME,notification.exe
+SSL_VERIFICATION,active
 SURVEY_ID,[insert survey id here]
 SURVEY_NAME,[insert survey name here]
 TIME_BEFORE_AVAILABILITY_CHECK,5

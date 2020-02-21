@@ -9,6 +9,7 @@ Created on Wed Feb 12 15:23:38 2020
 # https://api.qualtrics.com/docs/getting-survey-responses-via-the-new-export-apis
 
 import requests
+import certifi
 import zipfile
 import io, os
 import sys
@@ -17,6 +18,10 @@ from requests.exceptions import HTTPError
 
 
 def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
+    
+    certificate_file = certifi.where()
+    if os.environ.get("SSL_VERIFICATION") == "inactive":
+        certificate_file = False
     
     # Setting static parameters
     requestCheckProgress = 0.0
@@ -32,7 +37,7 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
     downloadRequestPayload = '{"format":"' + fileFormat + '"}'
     
     try:
-        downloadRequestResponse = requests.request("POST", downloadRequestUrl, data=downloadRequestPayload, headers=headers)
+        downloadRequestResponse = requests.request("POST", downloadRequestUrl, data=downloadRequestPayload, headers=headers, verify=certificate_file)
 
         # If the response was successful, no Exception will be raised
         downloadRequestResponse.raise_for_status()
@@ -57,7 +62,7 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
         while progressStatus != "complete" and progressStatus != "failed":
             print ("\tprogressStatus=", progressStatus)
             requestCheckUrl = baseUrl + progressId
-            requestCheckResponse = requests.request("GET", requestCheckUrl, headers=headers)
+            requestCheckResponse = requests.request("GET", requestCheckUrl, headers=headers, verify=certificate_file)
             requestCheckProgress = requestCheckResponse.json()["result"]["percentComplete"]
             print("\tDownload is " + str(requestCheckProgress) + " complete")
             progressStatus = requestCheckResponse.json()["result"]["status"]
@@ -76,7 +81,7 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
         fileId = requestCheckResponse.json()["result"]["fileId"]
         # Step 3: Downloading file
         requestDownloadUrl = baseUrl + fileId + "/file"
-        requestDownload = requests.request("GET", requestDownloadUrl, headers=headers, stream=True)
+        requestDownload = requests.request("GET", requestDownloadUrl, headers=headers, stream=True, verify=certificate_file)
     except Exception as err:
         print("[ERROR] Error during downloading Qualtrics survey file: {}".format(err))
         return None
