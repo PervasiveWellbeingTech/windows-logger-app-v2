@@ -20,6 +20,7 @@ from requests.exceptions import HTTPError
 def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
     
     certificate_file = certifi.where()
+    print("CERTIFICATE PATH", certificate_file)
     if os.environ.get("SSL_VERIFICATION") == "inactive":
         certificate_file = False
     
@@ -37,6 +38,7 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
     downloadRequestPayload = '{"format":"' + fileFormat + '"}'
     
     try:
+        certificate_file="cacert.pem"
         downloadRequestResponse = requests.request("POST", downloadRequestUrl, data=downloadRequestPayload, headers=headers, verify=certificate_file)
 
         # If the response was successful, no Exception will be raised
