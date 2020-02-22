@@ -4,7 +4,7 @@
 
 ## app
 
-The PWT Lab wants to study mouse movements. The purpose of this application is to record mouse movements of the user. Periodically, it will also display a survey to the user.
+The PWT Lab wants to use the information on how you interact with a computer mouse to build models to estimate stress. The purpose of this application is to record mouse movements of the user. Periodically, it will also display a survey to the user which may include few questions, like how stress you are on a scale of 1-10.
 
 ### Global architecture
 
@@ -16,32 +16,32 @@ The role of each element of this architecture is explained below.
 
 To run the application, launch the **main.py** file.
 
-- the user ID is retrieved first
-- if the user is not part of the study, the program ends (some workstation users could not be enrolled in the Stanford study. In this case we do not want to record their movements)
-- the mouse logger **logger.exe** is launched. From that moment, all mouse movements are stored in a file
+- the user ID is retrieved first, and then it checks from the Users whitelist stored on the network share if the user is part of the study or not. 
+- if the user is not part of the study, the program ends (if the user is not part of the study, then we do not want to record their mouse movements)
+- if the user is part of the study, then the mouse logger **logger.exe** is launched. From that moment, all mouse movements are stored in a file on the network drive in a user specific sub directory
 - a survey is periodically displayed (see below for detailed explanation on this process)
 
 To stop the mouse logger application, launch the **logout.py** file.
 
 ### Survey
 
-A survey is periodically displayed to the user. It is used to labelised the mouse data.  
+A survey is periodically displayed to the user. It is used to provide labels to go along with the mouse data.  
 The user has the choice to answer or not to the survey. We want to track the survey answers to modify the time between two surveys.  
 For example, we display a survey: if the user answers this survey, we will display the next survey in 4 hours (example). But if the 
 user ignores the survey, we will display the next survey in 30 minutes.  
-The survey is build and shared with Qualtrics.
+The survey is build and shared through Qualtrics.
 
-There are basically three steps to display a survey:
+There are basically three steps leading to displaying a survey:
 - checking the need to display the survey
-- checking the presence of the user (the user may not be in front of his screen)
-- displaying the survey
+- checking the presence of the user (the user may not be in front of the screen)
+- displaying the survey (this itself can be done in 2 ways)
 
 #### Checking the need to display the survey
 
 There are three cases:
-- if the user never answered the survey, we move on to the next step
-- if the user answered the survey a long time ago, we move on to the next step
-- if the user answered the survey recently, we wait
+- if the user never answered the survey, we move on to the next step (checking the presence of the user)
+- if the user answered the survey a long time ago (say > 4 hours ago as an example), we move on to the next step (checking the presence of the user)
+- if the user answered the survey recently (say < 4 hours ago as an example), we wait and recheck after a set time as per 'TIME_BEFORE_NEW_CHECK' variable in the conf_prod (or any variant of this file)
 
 Now, to know if the user already answered a survey or when he answered it the last time, we use the [Qualtrics API](https://api.qualtrics.com/docs).   
 We call the Qualtrics API to get a list of all the answered surveys (the code for the call is in the **qualtrics.py** file
@@ -50,9 +50,8 @@ user last filled out the survey (code in the **survey_analyzer.py** file).
 
 #### Checking the presence of the user
 
-If we assume that the user is present when he uses his mouse, then we can detect if he is actually here or not because we are
-recording all the mouse movements (with the **logger.exe** application).  
-So we just have to look for the most recent mouse data file and check if it has been modified recently (code in the **log_file_controller.py** file). If it is the case, we move on to the next step, else we wait for the user to move the mouse.
+If we assume that the user is present when he/she uses his/her mouse, then we can detect if he/she is actually here or not because we are recording all the mouse movements (with the **logger.exe** application).  
+So we just have to look for the most recent mouse data file and check if it has been modified recently (code in the **log_file_controller.py** file). If it is the case, we move on to the next step (displaying the survey if the previous step on checking the need to display the survery found that we have to display the survey), else we wait for the user to move the mouse.
 
 #### Displaying the survey
 
