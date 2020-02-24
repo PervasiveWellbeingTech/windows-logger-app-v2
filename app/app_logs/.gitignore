@@ -1,3 +1,2 @@
-.spyproject/
-__pycache__/
-conf_dev.txt
+*
+!.gitignore
