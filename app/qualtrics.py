@@ -17,10 +17,9 @@ import re
 from requests.exceptions import HTTPError
 
 
-def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
+def exportSurvey(apiToken,surveyId, dataCenter, fileFormat, logger):
     
     certificate_file = certifi.where()
-    print("CERTIFICATE PATH", certificate_file)
     if os.environ.get("SSL_VERIFICATION") == "inactive":
         certificate_file = False
     
@@ -38,46 +37,45 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
     downloadRequestPayload = '{"format":"' + fileFormat + '"}'
     
     try:
-        certificate_file="cacert.pem"
         downloadRequestResponse = requests.request("POST", downloadRequestUrl, data=downloadRequestPayload, headers=headers, verify=certificate_file)
 
         # If the response was successful, no Exception will be raised
         downloadRequestResponse.raise_for_status()
-    except HTTPError as http_err:
-        print("[ERROR] HTTP error occurred: {}".format(http_err))
+    except HTTPError as http_err:  # http_err is used in logger.exception
+        logger.exception("HTTP error occurred:")
         return None
     except Exception as err:
-        print("[ERROR] Unknown error occurred during Qualtrics request: {}".format(err))
+        logger.exception("Unknown error occurred during Qualtrics request:")
         return None
     else:
-        print("[INFO] Qualtrics request response received")
+        logger.info("Qualtrics request response received")
         if downloadRequestResponse:
-            print("[INFO] Qualtrics response successful - Status code: {}".format(downloadRequestResponse.status_code))
+            logger.info("Qualtrics response successful - Status code: {}".format(downloadRequestResponse.status_code))
         else:
-            print("[ERROR] Qualtrics response unsuccessful - Status code: {}".format(downloadRequestResponse.status_code))
+            logger.error("Qualtrics response unsuccessful - Status code: {}".format(downloadRequestResponse.status_code))
             return None
     
     # Step 2: Checking on Data Export Progress and waiting until export is ready
     try:
         progressId = downloadRequestResponse.json()["result"]["progressId"]
-        print("[INFO] Data export in progress...")
+        logger.info("Data export in progress...")
         while progressStatus != "complete" and progressStatus != "failed":
-            print ("\tprogressStatus=", progressStatus)
+            logger.debug("\tprogressStatus=", progressStatus)
             requestCheckUrl = baseUrl + progressId
             requestCheckResponse = requests.request("GET", requestCheckUrl, headers=headers, verify=certificate_file)
             requestCheckProgress = requestCheckResponse.json()["result"]["percentComplete"]
-            print("\tDownload is " + str(requestCheckProgress) + " complete")
+            logger.debug("\tDownload is " + str(requestCheckProgress) + " complete")
             progressStatus = requestCheckResponse.json()["result"]["status"]
     except Exception as err:
-        print("[ERROR] Error during Qualtrics data export: {}".format(err))
+        logger.exception("Error during Qualtrics data export:")
         return None
 
     #step 2.1: Check for error
     if progressStatus == "failed":
-        print("[ERROR] Qualtrics data export failed")
+        logger.error("Qualtrics data export failed")
         return None
     else:
-        print("\tComplete")
+        logger.debug("\tComplete")
 
     try:
         fileId = requestCheckResponse.json()["result"]["fileId"]
@@ -85,39 +83,39 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat):
         requestDownloadUrl = baseUrl + fileId + "/file"
         requestDownload = requests.request("GET", requestDownloadUrl, headers=headers, stream=True, verify=certificate_file)
     except Exception as err:
-        print("[ERROR] Error during downloading Qualtrics survey file: {}".format(err))
+        logger.exception("Error during downloading Qualtrics survey file:")
         return None
 
     try:
         # Step 4: Unzipping the file
         zipfile.ZipFile(io.BytesIO(requestDownload.content)).extractall("qualtrics_survey")
     except Exception as err:
-        print("[ERROR] Error when unzipping Qualtrics survey file: {}".format(err))
+        logger.exception("Error when unzipping Qualtrics survey file:")
         return None
     
-    print("[INFO] Qualtrics survey file correctly downloaded and unzipped")
+    logger.info("Qualtrics survey file correctly downloaded and unzipped")
     return True
 
 
-def main():
-    
+def main(logger):
+    logger.info("test")
     try:
       apiToken = os.environ.get("API_TOKEN")
       dataCenter = os.environ.get("DATA_CENTER")
       surveyId = os.environ.get("SURVEY_ID")
       fileFormat = os.environ.get("FILE_FORMAT")
     except KeyError:
-      print("[ERROR] Set environment variables API_TOKEN, DATA_CENTER, SURVEY_ID and FILE_FORMAT")
+      logger.error("Set environment variables API_TOKEN, DATA_CENTER, SURVEY_ID and FILE_FORMAT")
       sys.exit(2)
 
     if fileFormat not in ["csv", "tsv", "spss"]:
-        print ("[ERROR] fileFormat must be either csv, tsv, or spss")
+        logger.error("fileFormat must be either csv, tsv, or spss")
         sys.exit(2)
  
     r = re.compile("^SV_.*")
     m = r.match(surveyId)
     if not m:
-       print ("[ERROR] surveyId must match ^SV_.*")
+       logger.error("surveyId must match ^SV_.*")
        sys.exit(2)
 
-    return exportSurvey(apiToken, surveyId,dataCenter, fileFormat)
+    return exportSurvey(apiToken, surveyId,dataCenter, fileFormat, logger)

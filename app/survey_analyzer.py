@@ -9,7 +9,7 @@ import os
 import csv
 
 
-def get_surveys(user_name):
+def get_surveys(user_name, logger):
     """
     Used to parse survey answers file (in the "qualtrics_survey" folder).
     
@@ -23,7 +23,7 @@ def get_surveys(user_name):
     WARNING: At the moment, the only file format supported is CSV
     """
     
-    print("[INFO] Searching survey answers for {}...".format(user_name))
+    logger.info("Searching survey answers for {}...".format(user_name))
     try:
         file_name = "qualtrics_survey/{}.{}".format(os.environ.get("SURVEY_NAME"), os.environ.get("FILE_FORMAT"))
         with open(file_name) as csv_file:
@@ -37,22 +37,22 @@ def get_surveys(user_name):
                     answers.append(row)
         
         if answers:
-            print("[INFO] {} answer(s) found for {}".format(len(answers), user_name))
+            logger.info("{} answer(s) found for {}".format(len(answers), user_name))
             return answers
         else:
-            print("[WARNING] No answer found for {}".format(user_name))
+            logger.warning("No answer found for {}".format(user_name))
     except Exception as err:
-        print("[ERROR] Survey file not found: {}".format(err))
+        logger.excepion("Survey file not found:")
 
 
-def get_last_survey(user_name):
+def get_last_survey(user_name, logger):
     """
     Starts by retrieving all survey answers of the given user.
     Filters the answers to keep only the ones with 100% completion.
     Returns the last survey answer
     """
     
-    surveys = get_surveys(user_name)
+    surveys = get_surveys(user_name, logger)
     
     try:
         # Can be improved in retrieving dynamically parameters of the survey
@@ -67,4 +67,4 @@ def get_last_survey(user_name):
             
                 return surveys[-1]
     except Exception as err:
-        print("[ERROR] Survey answer parsing error: {}".format(err))
+        logger.exception("[ERROR] Survey answer parsing error:")

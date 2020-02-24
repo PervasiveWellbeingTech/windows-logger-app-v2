@@ -9,11 +9,33 @@ import os
 import sys
 import time
 import datetime
+import logging
 import win32api
 import webbrowser
 import qualtrics
 import survey_analyzer
 import log_file_controller
+
+
+# General logging configuration
+computer_name = os.environ.get("COMPUTERNAME", "unknown_computer_name")
+logger = logging.getLogger(computer_name)
+logger.setLevel(logging.DEBUG)
+logging.Formatter.converter = time.gmtime
+line_format = logging.Formatter("%(asctime)s,%(process)d,%(levelname)s,%(message)s",
+                               "%Y-%m-%d %H:%M:%S")
+
+# Console logger
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(line_format)
+logger.addHandler(console_handler)
+
+# File logger
+file_handler = logging.FileHandler("app_logs/{}.log".format(computer_name), mode="a")
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(line_format)
+logger.addHandler(file_handler)
 
 
 def setup_environment_variables():
@@ -56,33 +78,33 @@ def setup_environment_variables():
                 if len(elements) == 2:
                     key, value = elements
                     os.environ[key] = value
-        print("[INFO] Environment variables setup completed ({} env)".format(env))
+        logger.info("Environment variables setup completed ({} env)".format(env))
         return True
-    except Exception as err:
-        print("[ERROR] Error during the environment variables setup: {}".format(err))
+    except Exception as err:  # err is used in logger.exception
+        logger.exception("Error during the environment variables setup:")
         return False
 
 
 def launch_app(app_name):
     """Used to launch a Win32 application, given the application name."""
     
-    print("[INFO] Launching {}...".format(app_name))
+    logger.info("Launching {}...".format(app_name))
     try:
         win32api.WinExec(app_name)
-        print("[INFO] {} launched".format(app_name))
-        print([line for line in os.popen("tasklist").readlines() if app_name in line])
+        logger.info("{} launched".format(app_name))
+        logger.debug(str([line for line in os.popen("tasklist").readlines() if app_name in line]))
     except:
-        print("[ERROR] {} could not be launched properly".format(app_name))
+        logger.error("{} could not be launched properly".format(app_name))
 
 
 def close_app(app_name):
     """Used to kill a process, given its name"""
     
-    print("[INFO] Closing {}...".format(app_name))
+    logger.info("Closing {}...".format(app_name))
     os.system("taskkill /f /im {}".format(app_name))
 
-    print("[INFO] {} closed".format(app_name))
-    print([line for line in os.popen("tasklist").readlines() if app_name in line])
+    logger.info("{} closed".format(app_name))
+    logger.debug(str([line for line in os.popen("tasklist").readlines() if app_name in line]))
 
 
 def display_survey_time(survey, time_before_survey):
@@ -108,7 +130,7 @@ def display_survey_time(survey, time_before_survey):
     current_timestamp = current_time.timestamp()
     
     time_from_last_survey = current_timestamp - completion_timestamp
-    print("[INFO] Last survey completed {} seconds ago".format(round(time_from_last_survey)))
+    logger.info("Last survey completed {} seconds ago".format(round(time_from_last_survey)))
     
     return time_before_survey - time_from_last_survey
 
@@ -126,14 +148,14 @@ def display_survey(survey_id, computer_name, user_name):
     to the survey.
     """
     
-    log_file_controller.wait_user(user_name)
+    log_file_controller.wait_user(user_name, logger)
     
     if os.environ.get("NOTIFICATION") == "active":
         NOTIFICATION_APP_NAME = os.environ.get("NOTIFICATION_APP_NAME")
         close_app(NOTIFICATION_APP_NAME)
         launch_app(NOTIFICATION_APP_NAME)
     else:
-        print("[INFO] Displaying survey...")
+        logger.info("Displaying survey...")
         webbrowser.open(
             "https://stanforduniversity.qualtrics.com/jfe/form/{}?computer_name={}&user_name={}".format(
                 survey_id,
@@ -141,7 +163,7 @@ def display_survey(survey_id, computer_name, user_name):
                 user_name
             )
         )
-        print("[INFO] Survey displayed")
+        logger.info("Survey displayed")
     
 
 def is_study_user(user_name):
@@ -150,14 +172,15 @@ def is_study_user(user_name):
     with open(os.environ.get("USERS_WHITELIST_FILE")) as file:
         for user in file.readlines():
             if user.strip() == user_name:
-                print("[INFO] {} is part of the study".format(user_name))
+                logger.info("{} is part of the study".format(user_name))
                 return True
     
-    print("[WARNING] {} is not part of the study".format(user_name))
+    logger.warning("{} is not part of the study".format(user_name))
     return False
 
 
 if __name__ == "__main__" and setup_environment_variables():
+
     close_app(os.environ.get("LOGGER_APP_NAME"))
     
     COMPUTER_NAME = os.environ.get("COMPUTERNAME")
@@ -166,8 +189,8 @@ if __name__ == "__main__" and setup_environment_variables():
     TIME_BEFORE_NEW_CHECK = int(os.environ.get("TIME_BEFORE_NEW_CHECK"))
     TIME_BEFORE_NEW_SURVEY = int(os.environ.get("TIME_BEFORE_NEW_SURVEY"))
     
-    print("[INFO] Computer name: {}".format(COMPUTER_NAME))
-    print("[INFO] User name: {}".format(USER_NAME))
+    logger.info("Computer name: {}".format(COMPUTER_NAME))
+    logger.info("User name: {}".format(USER_NAME))
     
     # When the current user is not part of the study, we do not launch the logger
     if is_study_user(USER_NAME):
@@ -176,18 +199,18 @@ if __name__ == "__main__" and setup_environment_variables():
         launch_app(os.environ.get("LOGGER_APP_NAME"))
     
         while True:
-            print("[INFO] Process running...")
+            logger.info("Process running...")
             
             # Qualtrics API call to get survey answers
             # (which are stored in the "qualtrics_survey" folder)
-            print("[INFO] Qualtrics API call to retrieve survey answers...")
-            if not qualtrics.main():
-                print("[WARNING] Qualtrics API call issue - Process paused (logger still running)")
-                print("[INFO] Waiting time: {} seconds".format(TIME_BEFORE_NEW_CHECK))
+            logger.info("Qualtrics API call to retrieve survey answers...")
+            if not qualtrics.main(logger):
+                logger.warning("Qualtrics API call issue - Process paused (logger still running)")
+                logger.info("Waiting time: {} seconds".format(TIME_BEFORE_NEW_CHECK))
                 time.sleep(TIME_BEFORE_NEW_CHECK)
             
             # Find the last Qualtrics survey answered by the given user
-            last_survey = survey_analyzer.get_last_survey(USER_NAME)
+            last_survey = survey_analyzer.get_last_survey(USER_NAME, logger)
             
             if last_survey:
                 # Decide if we should display the survey or not
@@ -198,11 +221,11 @@ if __name__ == "__main__" and setup_environment_variables():
                     display_survey(SURVEY_ID, COMPUTER_NAME, USER_NAME)
                     sleep_time = TIME_BEFORE_NEW_CHECK
                 else:
-                    print("[INFO] The survey does not need to be displayed right now")
+                    logger.info("The survey does not need to be displayed right now")
                     sleep_time = round(waiting_time_before_survey) + 1
             else:
                 display_survey(SURVEY_ID, COMPUTER_NAME, USER_NAME)
                 sleep_time = TIME_BEFORE_NEW_CHECK
             
-            print("[INFO] Waiting time: {} seconds".format(sleep_time))
+            logger.info("Waiting time: {} seconds".format(sleep_time))
             time.sleep(sleep_time)
