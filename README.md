@@ -2,6 +2,17 @@
 
 "app" is the main application. "logger" and "notification" are the source code of two sub-applications used in the main application.
 
+**How to launch the app ?**
+
+*Works for Windows only (tested on Windows 10)*
+
+- Download the "app" folder
+- Verify that the **conf_prod.txt** file contains one key,value pair per line (and not everything on the same line, cf. below for details)
+- Launch the **main** file. Three options to launch this file:
+  - Run **main.py** directly in an IDE
+  - Run the command line `%python% main.py` (where `%python%` is your python path)
+  - Run the command line `cmd /K main.exe` to run the compiled code
+
 ## app
 
 The PWT Lab wants to use the information on how you interact with a computer mouse to build models to estimate stress. The purpose of this application is to record mouse movements of the user. Periodically, it will also display a survey to the user which may include few questions, like how stress you are on a scale of 1-10.
