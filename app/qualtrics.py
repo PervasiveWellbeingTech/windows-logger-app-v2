@@ -58,14 +58,16 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat, logger):
     # Step 2: Checking on Data Export Progress and waiting until export is ready
     try:
         progressId = downloadRequestResponse.json()["result"]["progressId"]
-        logger.info("Data export in progress...")
+        #logger.info("Data export in progress...")
         while progressStatus != "complete" and progressStatus != "failed":
+            logger.debug("\tprogressStatus={}".format(progressStatus))
             requestCheckUrl = baseUrl + progressId
             requestCheckResponse = requests.request("GET", requestCheckUrl, headers=headers, verify=certificate_file)
             requestCheckProgress = requestCheckResponse.json()["result"]["percentComplete"]
+            logger.debug("\tDownload is " + str(requestCheckProgress) + " complete")
             progressStatus = requestCheckResponse.json()["result"]["status"]
     except Exception as err:
-        logger.exception("Error during Qualtrics data export:")
+        #logger.exception("Error during Qualtrics data export:")
         return None
 
     #step 2.1: Check for error
@@ -73,7 +75,7 @@ def exportSurvey(apiToken,surveyId, dataCenter, fileFormat, logger):
         logger.error("Qualtrics data export failed")
         return None
     else:
-        logger.debug("Complete")
+        logger.debug("\tComplete")
 
     try:
         fileId = requestCheckResponse.json()["result"]["fileId"]
