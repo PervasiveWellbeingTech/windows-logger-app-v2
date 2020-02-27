@@ -88,6 +88,7 @@ Variables contained is the configuration file (alphabetical order):
 - `API_TOKEN`: token used by the Qualtrics API (this value must be kept secret)
 - `DATA_CENTER`: information used by the Qualtrics API
 - `DATA_STORAGE_PATH`: path to the folder where the mouse data files are stored (very important to end with "/", like "test_folder/")
+- `DISPLAY_TIME_MODE`: if it is set to "random", TIME_RANDOM_LOWER/UPPER_BOUND variables to calculate the next display survey time. Else, we use TIME_BEFORE_NEW_SURVEY
 - `FILE_FORMAT`: file format of the survey answers received after the Qualtrics API call. At the moment, the only supported format by the application is "csv"
 - `LOGGER_APP_NAME`: the name of the mouse logger app **logger.exe**
 - `NOTIFICATION`: if it is set to "active", we display the survey with a notification before. Else, we display the survey directly
@@ -98,6 +99,8 @@ Variables contained is the configuration file (alphabetical order):
 - `TIME_BEFORE_AVAILABILITY_CHECK`: time (in seconds) before checking again the user's presence (when he is not here)
 - `TIME_BEFORE_NEW_CHECK`: time (in seconds) before checking if the user answered the last displayed survey
 - `TIME_BEFORE_NEW_SURVEY`: minimum time (in seconds) between two surveys
+- `TIME_RANDOM_LOWER_BOUND`: used when DISPLAY_TIME_MODE is set to "random"
+- `TIME_RANDOM_UPPER_BOUND`: used when DISPLAY_TIME_MODE is set to "random"
 - `USERNAME_KEY`: this value has to be the name of the environment variable that the program will use to get the user ID (for example, if the user ID is stored in the "USERNAME" environment variable, put "USERNAME_KEY,USERNAME" in the configuration file)
 - `USERS_WHITELIST_FILE`: path to the file that contains the users whitelist (example: "folder/users.txt"). Used to know if the user is  part of the study or not
 

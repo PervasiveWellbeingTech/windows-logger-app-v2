@@ -10,6 +10,7 @@ import sys
 import time
 import datetime
 import logging
+import random
 import win32api
 import webbrowser
 import qualtrics
@@ -107,19 +108,31 @@ def close_app(app_name):
     logger.debug(str([line for line in os.popen("tasklist").readlines() if app_name in line]))
 
 
-def display_survey_time(survey, time_before_survey):
+def display_survey_time(survey, display_time_mode):
     """
     Given a survey, the function determines how many time (in seconds) we have 
     to wait before displaying the next survey.
-    This time is calculated using time_before_survey.
-    
+    Depending on the display_time_mode, this time is calculated differently.
+    The available modes are:
+        - random
+        - normal (default mode)
+        
+    Normal (default) mode:
+    The time is calculated using the TIME_BEFORE_NEW_SURVEY environment variable.
     Schematically:
         
-      given survey       now <-- T --> next survey
-           |______________|_____________|
-           <---- time_before_survey ---->
+      given survey       now <---- T ----> next survey
+           |________________|_______________|
+           <---- TIME_BEFORE_NEW_SURVEY ---->
+           
+    The function returns T (the time we have to wait before displaying the new survey).
+    
+    Random mode:
+    The time is calculated using TIME_RANDOM_LOWER_BOUND and TIME_RANDOM_UPPER_BOUND
+    environment variables.
        
-    The function returns T (the time we have to wait before displaying the new survey)
+    Instead of having a fixed TIME_BEFORE_NEW_SURVEY value, we compute a random
+    value between TIME_RANDOM_LOWER_BOUND and TIME_RANDOM_UPPER_BOUND.
     """
     
     completion_time_survey = survey[1]
@@ -128,6 +141,19 @@ def display_survey_time(survey, time_before_survey):
     
     current_time = datetime.datetime.utcnow()
     current_timestamp = current_time.timestamp()
+    
+    logger.info("Display survey time mode: {}".format(display_time_mode))
+    if display_time_mode == "random":
+        lower_bound = int(os.environ.get("TIME_RANDOM_LOWER_BOUND"))
+        upper_bound = int(os.environ.get("TIME_RANDOM_UPPER_BOUND"))
+        
+        if upper_bound <= lower_bound:
+            lower_bound = 0
+            upper_bound = 1
+            
+        time_before_survey = random.randrange(lower_bound, upper_bound)        
+    else:
+        time_before_survey = int(os.environ.get("TIME_BEFORE_NEW_SURVEY"))
     
     time_from_last_survey = current_timestamp - completion_timestamp
     logger.info("Last survey completed {} seconds ago".format(round(time_from_last_survey)))
@@ -185,9 +211,6 @@ if __name__ == "__main__" and setup_environment_variables():
     
     COMPUTER_NAME = os.environ.get("COMPUTERNAME")
     USER_NAME = os.environ.get(os.environ.get("USERNAME_KEY"))
-    SURVEY_ID = os.environ.get("SURVEY_ID")
-    TIME_BEFORE_NEW_CHECK = int(os.environ.get("TIME_BEFORE_NEW_CHECK"))
-    TIME_BEFORE_NEW_SURVEY = int(os.environ.get("TIME_BEFORE_NEW_SURVEY"))
     
     logger.info("Computer name: {}".format(COMPUTER_NAME))
     logger.info("User name: {}".format(USER_NAME))
@@ -200,6 +223,10 @@ if __name__ == "__main__" and setup_environment_variables():
     
         while True:
             logger.info("Process running...")
+            
+            SURVEY_ID = os.environ.get("SURVEY_ID")
+            DISPLAY_TIME_MODE = os.environ.get("DISPLAY_TIME_MODE")
+            TIME_BEFORE_NEW_CHECK = int(os.environ.get("TIME_BEFORE_NEW_CHECK"))
             
             # Qualtrics API call to get survey answers
             # (which are stored in the "qualtrics_survey" folder)
@@ -215,7 +242,7 @@ if __name__ == "__main__" and setup_environment_variables():
             if last_survey:
                 # Decide if we should display the survey or not
                 # This choice is based on the given time
-                waiting_time_before_survey = display_survey_time(last_survey, TIME_BEFORE_NEW_SURVEY)
+                waiting_time_before_survey = display_survey_time(last_survey, DISPLAY_TIME_MODE)
                 
                 if waiting_time_before_survey <= 0:
                     display_survey(SURVEY_ID, COMPUTER_NAME, USER_NAME)
