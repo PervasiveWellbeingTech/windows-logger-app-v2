@@ -197,7 +197,7 @@ def is_study_user(user_name):
     
     with open(os.environ.get("USERS_WHITELIST_FILE")) as file:
         for user in file.readlines():
-            if user.strip() == user_name:
+            if user.strip().lower() == user_name.lower():
                 logger.info("{} is part of the study".format(user_name))
                 return True
     
@@ -210,7 +210,7 @@ if __name__ == "__main__" and setup_environment_variables():
     close_app(os.environ.get("LOGGER_APP_NAME"))
     
     COMPUTER_NAME = os.environ.get("COMPUTERNAME")
-    USER_NAME = os.environ.get(os.environ.get("USERNAME_KEY"))
+    USER_NAME = win32api.GetUserName()
     
     logger.info("Computer name: {}".format(COMPUTER_NAME))
     logger.info("User name: {}".format(USER_NAME))
