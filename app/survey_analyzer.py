@@ -42,7 +42,7 @@ def get_surveys(user_name, logger):
         else:
             logger.warning("No answer found for {}".format(user_name))
     except Exception as err:
-        logger.excepion("Survey file not found:")
+        logger.exception("Survey file not found:")
 
 
 def get_last_survey(user_name, logger):
